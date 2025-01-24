@@ -3,18 +3,15 @@ import requests
 import json
 import datetime
 
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
+
 # Библиотека для работы с API Google Диска
 from pydrive.drive import GoogleDrive
 
 # Добавление индикатора прогресса
 from quickstart import gauth
 from tqdm import tqdm
-
-from configparser import ConfigParser
-
-urlsconf = 'config.ini'
-config = ConfigParser()
-config.read(urlsconf)
 
 
 class VK:
@@ -74,7 +71,6 @@ class VK:
         # Создание словаря, в котором имя фотографии является ключом,
         # ссылка на фотографию - значением
         dict_photo: dict = dict(zip(names_list, images_url))
-        print(dict_photo)
 
         return dict_photo
 
@@ -152,7 +148,7 @@ class Google:
         file_list: list = (self.drive.ListFile({'q': "'root' in parents and trashed=false"})
                            .GetList())
 
-        # проверка на наличие папки на Google Диске
+        # Проверка наличия папки на Google Диске
         for file in tqdm(file_list,
                          desc='Поиск папки на Google Диске и получение id'):
             if folder_metadata.get('title') in file.get('title'):
@@ -179,16 +175,36 @@ class Google:
 
 
 # Запуск кода
+
+def get_vk_user_id(directory_profile_photos):
+    """Функция для получения id пользователя в ВКонтакте,
+    скачивания фотографий и обработки ошибок"""
+
+    access_token: str = os.getenv('access_token')
+
+    while True:
+        try:
+            user_id: str = input('Input your vk user id: ')
+
+            if user_id.isdigit():
+
+                # Создание экземпляра класса VK
+                vk = VK(access_token, user_id)
+
+                # Вызов методов класса VK
+                return vk.get_photos(directory_profile_photos)
+
+            else:
+                print("Неккоректный id. Повторите ввод")
+
+        except AttributeError:
+            print("Неккоректный id. Повторите ввод")
+
+
 if __name__ == '__main__':
     directory_profile_photos = 'profile_photos'
 
-    # Создание экземпляра класса VK
-    access_token: str = config.get('vk_token', 'access_token')
-    user_id: str = input('Input your vk user id: ')
-    vk = VK(access_token, user_id)
-
-    # Выхов методов класса VK
-    vk.get_photos(directory_profile_photos)
+    get_vk_user_id(directory_profile_photos)
 
     Authorization: str = input('Input your Yandex OAuth-token: ')
 
